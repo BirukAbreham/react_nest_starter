@@ -1,6 +1,8 @@
 # compiled output
-/auth-server/dist
-/auth-server/node_modules
+*/dist
+*/node_modules
+*/dis-ssr
+*.local
 
 # Logs
 logs
@@ -37,3 +39,15 @@ lerna-debug.log*
 # Environment variable
 *.env 
 */keys
+
+# Auth UI ignores
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
