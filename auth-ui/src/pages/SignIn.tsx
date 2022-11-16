@@ -16,12 +16,18 @@ import {
 import { useForm } from "@mantine/form";
 import { AuthClient } from "../api";
 import { AxiosError } from "axios";
-import { useContext, useState } from "react";
-import { AuthContext } from "../context";
+import { useState } from "react";
 import { AuthContextType } from "../types";
+import { useAuth } from "../hooks";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 
 export function SignIn() {
-    const { setAuth } = useContext(AuthContext) as AuthContextType;
+    // user routing
+    const navigate = useNavigate();
+    const location = useLocation();
+    const from = location.state?.from?.pathname || "/";
+
+    const { setAuth } = useAuth() as AuthContextType;
 
     const [loading, setLoading] = useState<boolean>(false);
 
@@ -66,7 +72,8 @@ export function SignIn() {
                     refreshToken: refresh_token,
                 });
 
-                console.log("redirect to home page");
+                // redirect the user to authentication required page
+                navigate(from, { replace: true });
             }
         } catch (error: unknown | AxiosError) {
             setLoading(false);
@@ -138,7 +145,7 @@ export function SignIn() {
                 </Group>
 
                 <Divider
-                    label="Or continue with username"
+                    label="Or continue with"
                     labelPosition="center"
                     my="lg"
                 />
@@ -168,14 +175,16 @@ export function SignIn() {
                     {errors}
 
                     <Group position="apart" mt="xl">
-                        <Anchor
-                            component="button"
-                            type="button"
-                            color="dimmed"
-                            size="xs"
-                        >
-                            Don't have an account? Register
-                        </Anchor>
+                        <Link to="/sign_up">
+                            <Anchor
+                                component="button"
+                                type="button"
+                                color="dimmed"
+                                size="xs"
+                            >
+                                Don't have an account? Sign up
+                            </Anchor>
+                        </Link>
                         <Button type="submit">Sign In</Button>
                     </Group>
                 </form>

@@ -18,6 +18,7 @@ import { useForm } from "@mantine/form";
 import { useState } from "react";
 import { AuthClient } from "../api";
 import { AxiosError } from "axios";
+import { Link, useNavigate } from "react-router-dom";
 
 const EMAIL_REGEX =
     /^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
@@ -25,7 +26,11 @@ const EMAIL_REGEX =
 const PASSWORD_REGEX = /((?=.*\d)|(?=.*\W+))(?![.\n])(?=.*[A-Z])(?=.*[a-z]).*$/;
 
 export function SignUp() {
+    // user routing
+    const navigate = useNavigate();
+
     const [loading, setLoading] = useState(false);
+
     const [registerError, setRegisterError] = useState<string[]>([]);
 
     const registrationForm = useForm({
@@ -82,7 +87,9 @@ export function SignUp() {
 
             if (response.status === 201) {
                 setLoading(false);
-                console.log("redirect to sign in page");
+
+                // redirect the user to the sign in page
+                navigate("/sign_in", { replace: true });
             }
         } catch (error: unknown | AxiosError) {
             setLoading(false);
@@ -130,7 +137,7 @@ export function SignUp() {
                 </Group>
 
                 <Divider
-                    label="Or continue with email"
+                    label="Or continue with"
                     labelPosition="center"
                     my="lg"
                 />
@@ -169,19 +176,21 @@ export function SignUp() {
                             )}
                         />
                     </Stack>
-                
+
                     <Space h="md" />
                     {errors}
 
                     <Group position="apart" mt="xl">
-                        <Anchor
-                            component="button"
-                            type="button"
-                            color="dimmed"
-                            size="xs"
-                        >
-                            Already have an account? Login
-                        </Anchor>
+                        <Link to="/sign_in">
+                            <Anchor
+                                component="button"
+                                type="button"
+                                color="dimmed"
+                                size="xs"
+                            >
+                                Already have an account? Sign in
+                            </Anchor>
+                        </Link>
                         <Button type="submit">Sign Up</Button>
                     </Group>
                 </form>
