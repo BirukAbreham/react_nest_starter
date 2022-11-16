@@ -1,6 +1,11 @@
 import * as bcrypt from 'bcrypt';
 import * as crypto from 'crypto';
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+    HttpStatus,
+    Injectable,
+    NotFoundException,
+    UnauthorizedException,
+} from '@nestjs/common';
 import { LoginDTO, SignupDTO, TokenDTO } from '../dto';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
@@ -64,8 +69,15 @@ export class AuthService {
         return newToken;
     }
 
-    async getUser(userID: number): Promise<User> {
-        const user = await this.userRepo.get(userID);
+    async getUser(username: string): Promise<User> {
+        const user = await this.userRepo.getUser(username);
+
+        if (user === null) {
+            throw new NotFoundException({
+                statusCode: HttpStatus.NOT_FOUND,
+                message: `User by the username ${username} could not be found in the record`,
+            });
+        }
 
         return user;
     }

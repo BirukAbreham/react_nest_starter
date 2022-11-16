@@ -21,18 +21,7 @@ export type User = {
 
 export class UserRepository<User> implements GenericRepository<User> {
     async get(id: number): Promise<User> {
-        let user = users.find((_user) => _user.id === id);
-
-        if (user === null) {
-            throw new NotFoundException({
-                statusCode: HttpStatus.NOT_FOUND,
-                message: `User by the id ${id} could not be found in the record`,
-            });
-        }
-
-        const { password, refresh_hash, ...theReset } = user;
-
-        return <User>theReset;
+        throw new NotImplementedException('Method not implemented');
     }
 
     async create(item: User): Promise<any> {

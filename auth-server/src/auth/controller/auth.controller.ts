@@ -61,10 +61,10 @@ export class AuthController {
         return await this.authService.refreshToken(user.id, token);
     }
 
-    @Get('/user/:userID')
+    @Get('/user/:username')
     @HttpCode(HttpStatus.OK)
     @UseGuards(AuthGuard('jwt'))
-    async get_user(@Param('userID') userID: number): Promise<User> {
-        return await this.authService.getUser(userID);
+    async get_user(@Param('username') username: string): Promise<User> {
+        return await this.authService.getUser(username);
     }
 }
