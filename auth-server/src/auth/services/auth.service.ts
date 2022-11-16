@@ -52,8 +52,8 @@ export class AuthService {
         return updatedUser;
     }
 
-    async refreshToken(id: number, token: string): Promise<TokenDTO> {
-        const user = await this.userRepo.getUser(id);
+    async refreshToken(userID: number, token: string): Promise<TokenDTO> {
+        const user = await this.userRepo.getUser(userID);
 
         if (!user || !bcrypt.compareSync(token, user.refresh_hash)) {
             throw new UnauthorizedException();
@@ -62,6 +62,12 @@ export class AuthService {
         const newToken: TokenDTO = await this.signToken(user);
 
         return newToken;
+    }
+
+    async getUser(userID: number): Promise<User> {
+        const user = await this.userRepo.get(userID);
+
+        return user;
     }
 
     private async signToken(user: any): Promise<TokenDTO> {

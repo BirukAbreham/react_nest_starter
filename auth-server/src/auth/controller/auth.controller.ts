@@ -1,9 +1,11 @@
 import {
     Body,
     Controller,
+    Get,
     Headers,
     HttpCode,
     HttpStatus,
+    Param,
     Post,
     UnauthorizedException,
     UseGuards,
@@ -11,6 +13,7 @@ import {
 import { AuthGuard } from '@nestjs/passport';
 import { GetUser } from '../decorator';
 import { LoginDTO, SignupDTO, TokenDTO } from '../dto';
+import { User } from '../repository';
 import { AuthService } from '../services';
 
 @Controller('api/auth')
@@ -56,5 +59,12 @@ export class AuthController {
         const token = authorization.replace('Bearer', '').trim();
 
         return await this.authService.refreshToken(user.id, token);
+    }
+
+    @Get('/user/:userID')
+    @HttpCode(HttpStatus.OK)
+    @UseGuards(AuthGuard('jwt'))
+    async get_user(@Param('userID') userID: number): Promise<User> {
+        return await this.authService.getUser(userID);
     }
 }
