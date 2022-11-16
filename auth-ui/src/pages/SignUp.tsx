@@ -6,6 +6,7 @@ import {
     Divider,
     Group,
     Loader,
+    LoadingOverlay,
     Paper,
     PasswordInput,
     Space,
@@ -99,10 +100,8 @@ export function SignUp() {
         }
     }
 
-    const loader = loading ? <Loader variant="bars" /> : null;
-
     const errors = registerError.length ? (
-        <Group>
+        <Group grow>
             <Alert title="Error" color="red">
                 {registerError.map((message, idx) => (
                     <div key={idx}>
@@ -136,13 +135,12 @@ export function SignUp() {
                     my="lg"
                 />
 
-                {loader}
-
                 <form
                     onSubmit={registrationForm.onSubmit(
                         async (values) => await onRegister(values)
                     )}
                 >
+                    <LoadingOverlay visible={loading} overlayBlur={1} />
                     <Stack>
                         <TextInput
                             required

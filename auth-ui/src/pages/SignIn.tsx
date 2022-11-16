@@ -1,11 +1,14 @@
 import {
+    Alert,
     Anchor,
     Button,
     Container,
     Divider,
     Group,
+    LoadingOverlay,
     Paper,
     PasswordInput,
+    Space,
     Stack,
     Text,
     TextInput,
@@ -13,8 +16,17 @@ import {
 import { useForm } from "@mantine/form";
 import { AuthClient } from "../api";
 import { AxiosError } from "axios";
+import { useContext, useState } from "react";
+import { AuthContext } from "../context";
+import { AuthContextType } from "../types";
 
 export function SignIn() {
+    const { setAuth } = useContext(AuthContext) as AuthContextType;
+
+    const [loading, setLoading] = useState<boolean>(false);
+
+    const [loginErrors, setLoginErrors] = useState<string[]>([]);
+
     const loginForm = useForm({
         initialValues: { username: "", password: "" },
         validate: {
@@ -39,24 +51,75 @@ export function SignIn() {
             password: values.password,
         };
 
+        setLoading(true);
+
         try {
-            const response = await AuthClient.post("/api/auth/sign_in", data);
+            let response = await AuthClient.post("/api/auth/sign_in", data);
 
             if (response.status === 200) {
+                setLoading(false);
+
+                let { access_token, refresh_token } = response.data;
+
+                await getSignedInUser(data.username, {
+                    accessToken: access_token,
+                    refreshToken: refresh_token,
+                });
+
                 console.log("redirect to home page");
             }
         } catch (error: unknown | AxiosError) {
-            if (error instanceof AxiosError && error?.response) {
-                if (error?.response.status === 401) {
-                    console.error("Error: Username or password error");
-                } else {
-                    console.error("Error: ", error);
-                }
+            setLoading(false);
+            if (
+                error instanceof AxiosError &&
+                error?.response &&
+                error?.response.status === 401
+            ) {
+                let message = "Given username or password is incorrect";
+
+                setLoginErrors([message]);
             } else {
+                setLoginErrors(["Login failed with unexpected error"]);
+
                 console.error("Error: ", error);
             }
         }
     }
+
+    async function getSignedInUser(username: string, token: any) {
+        try {
+            let response = await AuthClient.get(`/api/auth/user/${username}`, {
+                headers: { Authorization: `Bearer ${token.accessToken}` },
+            });
+
+            if (response.status === 200) {
+                let { id, username, email } = response.data;
+
+                setAuth({
+                    user: { id, username, email },
+                    accessToken: token.accessToken,
+                    refreshToken: token.refreshToken,
+                });
+            }
+        } catch (error) {
+            setLoginErrors(["Login failed with unexpected error"]);
+
+            console.error("Error: ", error);
+        }
+    }
+
+    const errors = loginErrors.length ? (
+        <Group grow>
+            <Alert title="Error" color="red">
+                {loginErrors.map((message, idx) => (
+                    <div key={idx}>
+                        <Text>{message}</Text>
+                        <br />
+                    </div>
+                ))}
+            </Alert>
+        </Group>
+    ) : null;
 
     return (
         <Container size={520} my={80}>
@@ -85,6 +148,7 @@ export function SignIn() {
                         async (values) => await onSignIn(values)
                     )}
                 >
+                    <LoadingOverlay visible={loading} overlayBlur={1} />
                     <Stack>
                         <TextInput
                             required
@@ -99,6 +163,9 @@ export function SignIn() {
                             {...loginForm.getInputProps("password")}
                         />
                     </Stack>
+
+                    <Space h="md" />
+                    {errors}
 
                     <Group position="apart" mt="xl">
                         <Anchor
