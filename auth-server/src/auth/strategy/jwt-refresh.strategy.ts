@@ -1,10 +1,20 @@
-import { Injectable } from '@nestjs/common';
+import { HttpStatus, Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PassportStrategy } from '@nestjs/passport';
 import { Request } from 'express';
 import { readFileSync } from 'fs';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { join } from 'path';
+
+const cookieExtractor = (req: Request) => {
+    let data = req?.cookies['auth-token'];
+
+    if (!data) {
+        return null;
+    }
+
+    return data;
+};
 
 @Injectable()
 export class JwtRefreshStrategy extends PassportStrategy(
@@ -20,18 +30,26 @@ export class JwtRefreshStrategy extends PassportStrategy(
         );
 
         super({
-            jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
+            jwtFromRequest: ExtractJwt.fromExtractors([
+                (req: Request) => cookieExtractor(req),
+            ]),
             secretOrKey: REFRESH_PUBLIC_KEY,
             passReqToCallback: true,
+            ignoreExpiration: false,
         });
     }
 
-    async validate(request: Request, payload: any) {
-        const refreshToken = request
-            .get('Authorization')
-            .replace('Bearer', '')
-            .trim();
+    async validate(req: Request, payload: any) {
+        let data = req?.cookies["auth-token"];
 
-        return { ...payload, refreshToken };
+        if (!data) {
+            throw new UnauthorizedException({
+                statusCode: HttpStatus.UNAUTHORIZED,
+                message: "",
+                error: "Unauthorized"
+            });
+        }
+
+        return { ...payload, data };
     }
 }

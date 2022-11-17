@@ -1,7 +1,8 @@
+import { AppModule } from './app.module';
+import { NestFactory } from '@nestjs/core';
+import * as cookieParser from 'cookie-parser';
 import { ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { NestFactory } from '@nestjs/core';
-import { AppModule } from './app.module';
 
 async function bootstrap() {
     const app = await NestFactory.create(AppModule);
@@ -11,6 +12,9 @@ async function bootstrap() {
 
     // Global Validation pipe configuration
     app.useGlobalPipes(new ValidationPipe());
+
+    // Global cookie parser
+    app.use(cookieParser());
 
     // Environment variable configuration
     const configService = app.get<ConfigService>(ConfigService);

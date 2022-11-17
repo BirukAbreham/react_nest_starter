@@ -2,15 +2,17 @@ import {
     Body,
     Controller,
     Get,
-    Headers,
     HttpCode,
     HttpStatus,
     Param,
     Post,
+    Req,
+    Res,
     UnauthorizedException,
     UseGuards,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
+import { Request, Response } from 'express';
 import { GetUser } from '../decorator';
 import { LoginDTO, SignupDTO, TokenDTO } from '../dto';
 import { User } from '../repository';
@@ -32,12 +34,27 @@ export class AuthController {
 
     @Post('/sign_in')
     @HttpCode(HttpStatus.OK)
-    async sign_in(@Body() loginDto: LoginDTO) {
+    async sign_in(
+        @Body() loginDto: LoginDTO,
+        @Res({ passthrough: true }) res: Response,
+    ) {
         const user = await this.authService.validateUser(loginDto);
 
         if (!user) throw new UnauthorizedException();
 
-        return await this.authService.signIn(user);
+        const token: TokenDTO = await this.authService.signIn(user);
+
+        const { secureCookie, date, path } =
+            this.authService.authCookieOptions();
+
+        res.cookie('auth-token', token.refresh_token, {
+            path: path,
+            expires: date,
+            httpOnly: true,
+            secure: secureCookie,
+        });
+
+        return { access_token: token.access_token };
     }
 
     @Post('/sign_out')
@@ -54,11 +71,27 @@ export class AuthController {
     @UseGuards(AuthGuard('jwt_refresh'))
     async refresh(
         @GetUser() user: any,
-        @Headers('Authorization') authorization: string,
-    ): Promise<TokenDTO> {
-        const token = authorization.replace('Bearer', '').trim();
+        @Req() req: Request,
+        @Res({ passthrough: true }) res: Response,
+    ) {
+        const requestToken = req?.cookies['auth-token'];
 
-        return await this.authService.refreshToken(user.id, token);
+        const token: TokenDTO = await this.authService.refreshToken(
+            user.id,
+            requestToken,
+        );
+
+        const { secureCookie, date, path } =
+            this.authService.authCookieOptions();
+
+        res.cookie('auth-token', token.refresh_token, {
+            path: path,
+            expires: date,
+            httpOnly: true,
+            secure: secureCookie,
+        });
+
+        return { access_token: token.access_token };
     }
 
     @Get('/user/:username')

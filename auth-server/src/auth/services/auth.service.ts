@@ -82,6 +82,29 @@ export class AuthService {
         return user;
     }
 
+    authCookieOptions(): { date: Date; secureCookie: boolean; path: string } {
+        let refreshExpire =
+            this.configService.get<string>('REFRESH_KEY_EXPIRE');
+
+        let milliSeconds = Number(
+            refreshExpire.substring(0, refreshExpire.length - 2),
+        );
+
+        let date = new Date();
+
+        date.setMilliseconds(date.getMilliseconds() + milliSeconds);
+
+        const secureCookie = this.configService.get<string>('COOKIE_SECURE');
+
+        const path = this.configService.get<string>('COOKIE_PATH');
+
+        return {
+            date,
+            path,
+            secureCookie: secureCookie === 'false' ? false : true,
+        };
+    }
+
     private async signToken(user: any): Promise<TokenDTO> {
         const payload = {
             sub: crypto.randomUUID().split('-').join('').substring(0, 10),
