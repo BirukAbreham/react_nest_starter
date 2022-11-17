@@ -57,15 +57,6 @@ export class AuthController {
         return { access_token: token.access_token };
     }
 
-    @Post('/sign_out')
-    @HttpCode(HttpStatus.OK)
-    @UseGuards(AuthGuard('jwt'))
-    async sign_out(@GetUser() user: any) {
-        const logout = await this.authService.nullifyRefToken(user.id);
-
-        return logout;
-    }
-
     @Post('/refresh')
     @HttpCode(HttpStatus.OK)
     @UseGuards(AuthGuard('jwt_refresh'))
@@ -94,10 +85,28 @@ export class AuthController {
         return { access_token: token.access_token };
     }
 
+    @Post('/sign_out')
+    @HttpCode(HttpStatus.OK)
+    @UseGuards(AuthGuard('jwt'))
+    async sign_out(
+        @GetUser() user: any,
+        @Res({ passthrough: true }) res: Response,
+    ) {
+        const logout = await this.authService.nullifyRefToken(user.id);
+
+        res.clearCookie("auth-token");
+
+        return logout;
+    }
+
     @Get('/user/:username')
     @HttpCode(HttpStatus.OK)
     @UseGuards(AuthGuard('jwt'))
     async get_user(@Param('username') username: string): Promise<User> {
-        return await this.authService.getUser(username);
+        const user = await this.authService.getUser(username);
+
+        const { password, refresh_hash, ...theReset } = user;
+
+        return <User>theReset;
     }
 }

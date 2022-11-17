@@ -1,11 +1,9 @@
-import {
-    HttpStatus,
-    NotFoundException,
-    NotImplementedException,
-} from '@nestjs/common';
+import { NotImplementedException } from '@nestjs/common';
 import { GenericRepository } from './generic.repository';
 
 let users = [];
+
+let usedTokens = [];
 
 export type User = {
     id?: number;
@@ -17,6 +15,14 @@ export type User = {
     password: string;
 
     refresh_hash?: string;
+};
+
+export type TokenFamily = {
+    id?: number;
+
+    user_id: number;
+
+    hash_token: string;
 };
 
 export class UserRepository<User> implements GenericRepository<User> {
@@ -89,5 +95,29 @@ export class UserRepository<User> implements GenericRepository<User> {
         return change
             ? { message: `user refresh updated` }
             : { message: `user could not be found` };
+    }
+
+    async getAllUsedTokens(userID: number) {
+        let userTokenFamilies = usedTokens.filter(
+            (tokenFamily) => tokenFamily.user_id === userID,
+        );
+
+        return userTokenFamilies;
+    }
+
+    async createUserTokenFamily(tokenFamily: TokenFamily) {
+        let added;
+
+        if (usedTokens.length === 0) {
+            added = usedTokens.push({ id: 1, ...tokenFamily });
+
+            return added; 
+        }
+
+        let lastIdx = usedTokens.length;
+
+        added = usedTokens.push({ id: lastIdx + 1, ...tokenFamily });
+
+        return added;
     }
 }

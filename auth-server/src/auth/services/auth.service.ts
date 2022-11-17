@@ -1,6 +1,7 @@
 import * as bcrypt from 'bcrypt';
 import * as crypto from 'crypto';
 import {
+    ForbiddenException,
     HttpStatus,
     Injectable,
     NotFoundException,
@@ -21,6 +22,18 @@ export class AuthService {
         private readonly configService: ConfigService,
     ) {}
 
+    async signup(signupDto: SignupDTO): Promise<any> {
+        const user = {
+            username: signupDto.username,
+            email: signupDto.email,
+            password: bcrypt.hashSync(signupDto.password, 10),
+        };
+
+        const newUser = await this.userRepo.create(user);
+
+        return newUser;
+    }
+
     async validateUser(loginDto: LoginDTO): Promise<any> {
         const user = await this.userRepo.getUser(loginDto.username);
 
@@ -39,34 +52,52 @@ export class AuthService {
         return token;
     }
 
-    async signup(signupDto: SignupDTO): Promise<any> {
-        const user = {
-            username: signupDto.username,
-            email: signupDto.email,
-            password: bcrypt.hashSync(signupDto.password, 10),
-        };
+    async refreshToken(userID: number, token: string): Promise<TokenDTO> {
+        const user = await this.userRepo.getUser(userID);
 
-        const newUser = await this.userRepo.create(user);
+        const isInvalidToken: boolean = await this.isInvalidatedToken(
+            userID,
+            token,
+        );
 
-        return newUser;
+        if (isInvalidToken) {
+            if (user && user.refresh_hash) {
+                await this.userRepo.createUserTokenFamily({
+                    user_id: user.id,
+                    hash_token: user.refresh_hash,
+                });
+            }
+
+            await this.userRepo.updateRefreshToken(userID, null);
+
+            throw new ForbiddenException({
+                statusCode: HttpStatus.FORBIDDEN,
+                message: 'Access denied',
+            });
+        }
+
+        if (
+            (user && !user.refresh_hash) ||
+            !user ||
+            !bcrypt.compareSync(token, user.refresh_hash)
+        ) {
+            throw new UnauthorizedException();
+        }
+        
+        await this.userRepo.createUserTokenFamily({
+            user_id: user.id,
+            hash_token: user.refresh_hash,
+        });
+
+        const newToken: TokenDTO = await this.signToken(user);
+
+        return newToken;
     }
 
     async nullifyRefToken(id: number): Promise<any> {
         const updatedUser = await this.userRepo.updateRefreshToken(id, null);
 
         return updatedUser;
-    }
-
-    async refreshToken(userID: number, token: string): Promise<TokenDTO> {
-        const user = await this.userRepo.getUser(userID);
-
-        if (!user || !bcrypt.compareSync(token, user.refresh_hash)) {
-            throw new UnauthorizedException();
-        }
-
-        const newToken: TokenDTO = await this.signToken(user);
-
-        return newToken;
     }
 
     async getUser(username: string): Promise<User> {
@@ -151,5 +182,32 @@ export class AuthService {
         );
 
         return { access_token: accessToken, refresh_token: refreshToken };
+    }
+
+    private async isInvalidatedToken(
+        userID: number,
+        token: string,
+        userTokenFamilies?: any[],
+    ): Promise<boolean> {
+        let tokenFamilies;
+
+        if (userTokenFamilies) {
+            tokenFamilies = userTokenFamilies;
+        } else {
+            tokenFamilies = await this.userRepo.getAllUsedTokens(userID);
+        }
+
+        for (const usedToken of tokenFamilies) {
+            let areTokensIdentical = bcrypt.compareSync(
+                token,
+                usedToken.hash_token,
+            );
+            
+            if (areTokensIdentical) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }
