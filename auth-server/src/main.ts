@@ -8,7 +8,12 @@ async function bootstrap() {
     const app = await NestFactory.create(AppModule);
 
     // Global CORs configuration
-    app.enableCors({ origin: "*" });
+    app.enableCors({
+        origin: [
+            'http://localhost:5173',
+        ],
+        credentials: true,
+    });
 
     // Global Validation pipe configuration
     app.useGlobalPipes(new ValidationPipe());
@@ -19,6 +24,6 @@ async function bootstrap() {
     // Environment variable configuration
     const configService = app.get<ConfigService>(ConfigService);
 
-    await app.listen(configService.get("APP_PORT") || 5050);
+    await app.listen(configService.get('APP_PORT') || 5050);
 }
 bootstrap();
