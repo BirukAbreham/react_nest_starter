@@ -1,8 +1,9 @@
 import { Button, Container, createStyles, Text, Title } from "@mantine/core";
-import { AuthClient } from "../api";
 import { useAuth } from "../hooks";
 import { AuthContextType } from "../types";
 import { useNavigate } from "react-router-dom";
+import { AxiosError } from "axios";
+import { AuthClient } from "../api";
 
 const useStyles = createStyles((theme) => ({
     wrapper: {
@@ -70,7 +71,7 @@ const useStyles = createStyles((theme) => ({
 export function Home() {
     const { classes } = useStyles();
 
-    const { auth, setAuth } = useAuth() as AuthContextType;
+    const { setAuth } = useAuth() as AuthContextType;
 
     const navigate = useNavigate();
 
@@ -79,7 +80,7 @@ export function Home() {
 
         try {
             const response = await AuthClient.post("/api/auth/sign_out", null, {
-                headers: { Authorization: `Bearer ${auth.accessToken}` },
+                withCredentials: true,
             });
 
             if (response.status === 200) {
@@ -92,8 +93,16 @@ export function Home() {
                 // redirect user to sign in page
                 navigate("/sign_in", { replace: true });
             }
-        } catch (error) {
-            console.error("Error: ", error);
+        } catch (error: unknown | AxiosError) {
+            if (
+                error instanceof AxiosError &&
+                error?.response &&
+                error?.response.status === 400
+            ) {
+                console.log("error: ", error.response.data);
+            } else {
+                console.error("error: ", error);
+            }
         }
     }
 

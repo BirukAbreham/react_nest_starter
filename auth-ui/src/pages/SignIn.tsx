@@ -60,16 +60,17 @@ export function SignIn() {
         setLoading(true);
 
         try {
-            let response = await AuthClient.post("/api/auth/sign_in", data);
+            let response = await AuthClient.post("/api/auth/sign_in", data, {
+                withCredentials: true,
+            });
 
             if (response.status === 200) {
                 setLoading(false);
 
-                let { access_token, refresh_token } = response.data;
+                let { access_token } = response.data;
 
                 await getSignedInUser(data.username, {
                     accessToken: access_token,
-                    refreshToken: refresh_token,
                 });
 
                 // redirect the user to authentication required page
@@ -87,8 +88,6 @@ export function SignIn() {
                 setLoginErrors([message]);
             } else {
                 setLoginErrors(["Login failed with unexpected error"]);
-
-                console.error("Error: ", error);
             }
         }
     }
@@ -100,18 +99,15 @@ export function SignIn() {
             });
 
             if (response.status === 200) {
-                let { id, username, email } = response.data;
+                const { id, username, email } = response.data;
 
                 setAuth({
                     user: { id, username, email },
                     accessToken: token.accessToken,
-                    refreshToken: token.refreshToken,
                 });
             }
         } catch (error) {
             setLoginErrors(["Login failed with unexpected error"]);
-
-            console.error("Error: ", error);
         }
     }
 

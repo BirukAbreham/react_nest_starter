@@ -8,12 +8,10 @@ export interface IAuthType {
     };
 
     accessToken: string;
-
-    refreshToken: string;
 }
 
 export type AuthContextType = {
     auth: IAuthType;
 
-    setAuth: (auth: IAuthType) => void;
+    setAuth: Function;
 };

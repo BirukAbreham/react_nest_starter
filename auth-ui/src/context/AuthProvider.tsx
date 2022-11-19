@@ -11,7 +11,6 @@ export const AuthProvider = ({ children }: any) => {
             email: "",
         },
         accessToken: "",
-        refreshToken: "",
     });
 
     return (
