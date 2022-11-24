@@ -35,20 +35,27 @@ export class AuthService {
         return newUser;
     }
 
-    async validateUser(loginDto: LoginDTO): Promise<any> {
-        const user = await this.userRepo.getUser(loginDto.username);
+    async validateUser(credentials: LoginDTO): Promise<any> {
+        const user = await this.userRepo.getUser(credentials.username);
 
-        if (user && bcrypt.compareSync(loginDto.password, user.password)) {
-            const { password, refreshHash, ...result } = user;
-
-            return result;
+        if (user && bcrypt.compareSync(credentials.password, user.password)) {
+            return user;
         }
 
         return null;
     }
 
-    async signIn(user: any): Promise<TokenDTO> {
+    async signIn(user: User): Promise<TokenDTO> {
         const token: TokenDTO = await this.signToken(user);
+
+        if (user.refreshHash) {
+            let previousHash = <string>user.refreshHash;
+
+            await this.userRepo.createUserTokenFamily({
+                userId: user.id,
+                tokenHash: previousHash,
+            });
+        }
 
         return token;
     }
@@ -95,8 +102,25 @@ export class AuthService {
         return newToken;
     }
 
-    async nullifyRefToken(id: number): Promise<any> {
-        const updatedUser = await this.userRepo.updateRefreshToken(id, null);
+    async signOut(user: User) {
+        const existingUser = await this.userRepo.getUser(user.id);
+
+        if (!existingUser) {
+            throw new UnauthorizedException({
+                statusCode: HttpStatus.UNAUTHORIZED,
+                message: 'User is not authorized',
+            });
+        }
+
+        await this.userRepo.createUserTokenFamily({
+            userId: existingUser.id,
+            tokenHash: existingUser.refreshHash,
+        });
+
+        const updatedUser = await this.userRepo.updateRefreshToken(
+            existingUser.id,
+            null,
+        );
 
         return updatedUser;
     }
@@ -201,7 +225,7 @@ export class AuthService {
         for (const usedToken of tokenFamilies) {
             let areTokensIdentical = bcrypt.compareSync(
                 token,
-                usedToken.hash_token,
+                usedToken.tokenHash,
             );
 
             if (areTokensIdentical) {

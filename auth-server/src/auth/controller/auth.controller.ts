@@ -90,7 +90,7 @@ export class AuthController {
         @GetUser() user: any,
         @Res({ passthrough: true }) res: Response,
     ) {
-        await this.authService.nullifyRefToken(user.id);
+        await this.authService.signOut(user);
 
         res.clearCookie('auth-token');
 
