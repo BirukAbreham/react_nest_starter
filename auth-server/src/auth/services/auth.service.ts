@@ -10,9 +10,10 @@ import {
 import { LoginDTO, SignupDTO, TokenDTO } from '../dto';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
-import { User, UserRepository } from '../repository';
+import { UserRepository } from '../repository';
 import { readFileSync } from 'fs';
 import { join } from 'path';
+import { TokenFamily, User } from '@prisma/client';
 
 @Injectable()
 export class AuthService {
@@ -38,7 +39,7 @@ export class AuthService {
         const user = await this.userRepo.getUser(loginDto.username);
 
         if (user && bcrypt.compareSync(loginDto.password, user.password)) {
-            const { password, refresh_hash, ...result } = user;
+            const { password, refreshHash, ...result } = user;
 
             return result;
         }
@@ -61,10 +62,10 @@ export class AuthService {
         );
 
         if (isInvalidToken) {
-            if (user && user.refresh_hash) {
+            if (user && user.refreshHash) {
                 await this.userRepo.createUserTokenFamily({
-                    user_id: user.id,
-                    hash_token: user.refresh_hash,
+                    userId: user.id,
+                    tokenHash: user.refreshHash,
                 });
             }
 
@@ -77,16 +78,16 @@ export class AuthService {
         }
 
         if (
-            (user && !user.refresh_hash) ||
+            (user && !user.refreshHash) ||
             !user ||
-            !bcrypt.compareSync(token, user.refresh_hash)
+            !bcrypt.compareSync(token, user.refreshHash)
         ) {
             throw new UnauthorizedException();
         }
-        
+
         await this.userRepo.createUserTokenFamily({
-            user_id: user.id,
-            hash_token: user.refresh_hash,
+            userId: user.id,
+            tokenHash: user.refreshHash,
         });
 
         const newToken: TokenDTO = await this.signToken(user);
@@ -136,7 +137,7 @@ export class AuthService {
         };
     }
 
-    private async signToken(user: any): Promise<TokenDTO> {
+    private async signToken(user: User): Promise<TokenDTO> {
         const payload = {
             sub: crypto.randomUUID().split('-').join('').substring(0, 10),
             id: user.id,
@@ -181,13 +182,13 @@ export class AuthService {
             bcrypt.hashSync(refreshToken, 10),
         );
 
-        return { access_token: accessToken, refresh_token: refreshToken };
+        return { accessToken, refreshToken };
     }
 
     private async isInvalidatedToken(
         userID: number,
         token: string,
-        userTokenFamilies?: any[],
+        userTokenFamilies?: TokenFamily[],
     ): Promise<boolean> {
         let tokenFamilies;
 
@@ -202,7 +203,7 @@ export class AuthService {
                 token,
                 usedToken.hash_token,
             );
-            
+
             if (areTokensIdentical) {
                 return true;
             }

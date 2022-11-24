@@ -1,5 +1,5 @@
 export class TokenDTO {
-    access_token: string;
+    accessToken: string;
 
-    refresh_token: string;
+    refreshToken: string;
 }

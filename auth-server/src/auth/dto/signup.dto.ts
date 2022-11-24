@@ -37,5 +37,5 @@ export class SignupDTO {
     @Match('password', {
         message: 'Password confirmation is not the same as the password',
     })
-    password_confirmed: string;
+    confirmPassword: string;
 }

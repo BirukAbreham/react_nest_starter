@@ -12,10 +12,10 @@ import {
     UseGuards,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
+import { User } from '@prisma/client';
 import { Request, Response } from 'express';
 import { GetUser } from '../decorator';
 import { LoginDTO, SignupDTO, TokenDTO } from '../dto';
-import { User } from '../repository';
 import { AuthService } from '../services';
 
 @Controller('api/auth')
@@ -35,26 +35,25 @@ export class AuthController {
     @Post('/sign_in')
     @HttpCode(HttpStatus.OK)
     async sign_in(
-        @Body() loginDto: LoginDTO,
+        @Body() credentials: LoginDTO,
         @Res({ passthrough: true }) res: Response,
     ) {
-        const user = await this.authService.validateUser(loginDto);
+        const user = await this.authService.validateUser(credentials);
 
         if (!user) throw new UnauthorizedException();
 
         const token: TokenDTO = await this.authService.signIn(user);
 
-        const { secureCookie, date, path } =
+        const { secureCookie, date } =
             this.authService.authCookieOptions();
 
-        res.cookie('auth-token', token.refresh_token, {
-            path: path,
+        res.cookie('auth-token', token.refreshToken, {
             expires: date,
             httpOnly: true,
             secure: secureCookie,
         });
 
-        return { access_token: token.access_token };
+        return { accessToken: token.accessToken };
     }
 
     @Post('/refresh')
@@ -72,17 +71,16 @@ export class AuthController {
             requestToken,
         );
 
-        const { secureCookie, date, path } =
+        const { secureCookie, date } =
             this.authService.authCookieOptions();
 
-        res.cookie('auth-token', token.refresh_token, {
-            path: path,
+        res.cookie('auth-token', token.refreshToken, {
             expires: date,
             httpOnly: true,
             secure: secureCookie,
         });
 
-        return { access_token: token.access_token };
+        return { accessToken: token.accessToken };
     }
 
     @Post('/sign_out')
@@ -92,11 +90,23 @@ export class AuthController {
         @GetUser() user: any,
         @Res({ passthrough: true }) res: Response,
     ) {
-        const logout = await this.authService.nullifyRefToken(user.id);
+        await this.authService.nullifyRefToken(user.id);
 
-        res.clearCookie("auth-token");
+        res.clearCookie('auth-token');
 
-        return logout;
+        return { message: `user signed out` };
+    }
+
+    @Get('/dummy_json')
+    @HttpCode(HttpStatus.OK)
+    @UseGuards(AuthGuard('jwt'))
+    async get_dummy_json() {
+        return {
+            userId: 1,
+            id: 1,
+            title: 'delectus aut autem',
+            completed: false,
+        };
     }
 
     @Get('/user/:username')
@@ -105,7 +115,7 @@ export class AuthController {
     async get_user(@Param('username') username: string): Promise<User> {
         const user = await this.authService.getUser(username);
 
-        const { password, refresh_hash, ...theReset } = user;
+        const { password, refreshHash, ...theReset } = user;
 
         return <User>theReset;
     }

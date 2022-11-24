@@ -37,7 +37,7 @@ lerna-debug.log*
 !.vscode/extensions.json
 
 # Environment variable
-.development.env 
+.env.development
 */keys
 
 # Auth UI ignores
@@ -51,3 +51,7 @@ lerna-debug.log*
 *.njsproj
 *.sln
 *.sw?
+
+# Development database environments
+dbs
+dbs/*
