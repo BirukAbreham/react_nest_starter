@@ -40,13 +40,13 @@ export class JwtRefreshStrategy extends PassportStrategy(
     }
 
     async validate(req: Request, payload: any) {
-        let data = req?.cookies["auth-token"];
+        let data = req?.cookies['auth-token'];
 
         if (!data) {
             throw new UnauthorizedException({
                 statusCode: HttpStatus.UNAUTHORIZED,
-                message: "",
-                error: "Unauthorized"
+                message: '',
+                error: 'Unauthorized',
             });
         }
 

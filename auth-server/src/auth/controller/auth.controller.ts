@@ -44,8 +44,7 @@ export class AuthController {
 
         const token: TokenDTO = await this.authService.signIn(user);
 
-        const { secureCookie, date } =
-            this.authService.authCookieOptions();
+        const { secureCookie, date } = this.authService.authCookieOptions();
 
         res.cookie('auth-token', token.refreshToken, {
             expires: date,
@@ -71,8 +70,7 @@ export class AuthController {
             requestToken,
         );
 
-        const { secureCookie, date } =
-            this.authService.authCookieOptions();
+        const { secureCookie, date } = this.authService.authCookieOptions();
 
         res.cookie('auth-token', token.refreshToken, {
             expires: date,

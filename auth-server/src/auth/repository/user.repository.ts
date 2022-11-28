@@ -89,7 +89,7 @@ export class UserRepository<User> implements GenericRepository<User> {
 
     async getAllUsedTokens(userID: number) {
         const tokenFamilies = await this.dbService.tokenFamily.findMany({
-            where: { userId: userID }
+            where: { userId: userID },
         });
 
         return tokenFamilies;
