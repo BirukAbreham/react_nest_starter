@@ -1,5 +1,6 @@
 import axios from "axios";
 
-export const AuthClient = axios.create({
+export const ApiClient = axios.create({
     baseURL: "http://localhost:5050",
+    withCredentials: false,
 });

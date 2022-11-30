@@ -6,7 +6,9 @@ import {
     Text,
     Title,
 } from "@mantine/core";
+import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useApiClient } from "../hooks";
 
 const useStyles = createStyles((theme) => ({
     root: {
@@ -48,11 +50,20 @@ export function NotFound404() {
 
     const navigate = useNavigate();
 
+    const apiClient = useApiClient();
+
     function goToHome(event: any) {
         event.preventDefault();
 
         navigate("/", { replace: true });
     }
+
+    useEffect(() => {
+        apiClient
+            .get("/api/auth/dummy_json")
+            .then((res) => console.log("response: ", res.data))
+            .catch((error) => console.log("Error: ", error));
+    }, []);
 
     return (
         <Container className={classes.root}>

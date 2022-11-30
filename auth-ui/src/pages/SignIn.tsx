@@ -67,10 +67,10 @@ export function SignIn() {
             if (response.status === 200) {
                 setLoading(false);
 
-                let { access_token } = response.data;
+                let { accessToken } = response.data;
 
                 await getSignedInUser(data.username, {
-                    accessToken: access_token,
+                    accessToken,
                 });
 
                 // redirect the user to authentication required page

@@ -1,4 +1,11 @@
-import { Button, Container, createStyles, Text, Title } from "@mantine/core";
+import {
+    Anchor,
+    Button,
+    Container,
+    createStyles,
+    Text,
+    Title,
+} from "@mantine/core";
 import { useAuth } from "../hooks";
 import { AuthContextType } from "../types";
 import { useNavigate } from "react-router-dom";
@@ -147,6 +154,15 @@ export function Home() {
                         onClick={async (event: any) => await userSignOut(event)}
                     >
                         Log out
+                    </Button>
+                    <Button
+                        className={classes.control}
+                        size="lg"
+                        onClick={() => {
+                            navigate("/ajslkdjgalskjdga", { replace: true });
+                        }}
+                    >
+                        To Four O Four
                     </Button>
                 </div>
             </div>
