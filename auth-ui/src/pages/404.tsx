@@ -6,7 +6,9 @@ import {
     Text,
     Title,
 } from "@mantine/core";
+import { useQuery } from "react-query";
 import { useNavigate } from "react-router-dom";
+import { useAPIClient } from "../hooks";
 
 const useStyles = createStyles((theme) => ({
     root: {
@@ -46,7 +48,27 @@ const useStyles = createStyles((theme) => ({
 export function NotFound404() {
     const { classes } = useStyles();
 
+    // react router related
     const navigate = useNavigate();
+
+    // API request related
+    const apiClient = useAPIClient();
+
+    useQuery(
+        ["dummy"],
+        async () => {
+            return await apiClient.get("/auth/dummy_json");
+        },
+        {
+            retry: false,
+            onSuccess: (response) => {
+                console.log("res: ", response);
+            },
+            onError: (error) => {
+                console.log("error: ", error);
+            },
+        }
+    );
 
     function goToHome(event: any) {
         event.preventDefault();

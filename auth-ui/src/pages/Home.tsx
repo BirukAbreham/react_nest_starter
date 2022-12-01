@@ -1,9 +1,6 @@
 import { Button, Container, createStyles, Text, Title } from "@mantine/core";
-import { useAuth } from "../hooks";
-import { AuthContextType } from "../types";
 import { useNavigate } from "react-router-dom";
 import { AxiosError } from "axios";
-import { AuthClient } from "../api";
 import { requestSignOut, selectUser, useAppDispatch } from "../store";
 import { useSelector } from "react-redux";
 
@@ -84,7 +81,9 @@ export function Home() {
         event.preventDefault();
 
         try {
-            const response: any = await dispatch(requestSignOut(user.username)).unwrap();
+            const response: any = await dispatch(
+                requestSignOut(user.username)
+            ).unwrap();
 
             if (response.status === 200) {
                 // redirect user to sign in page
@@ -144,6 +143,15 @@ export function Home() {
                         onClick={async (event: any) => await userSignOut(event)}
                     >
                         Log out
+                    </Button>
+                    <Button
+                        className={classes.control}
+                        size="lg"
+                        onClick={() => {
+                            navigate("/askdljgalskjdglask", { replace: true });
+                        }}
+                    >
+                        To Four 0 Four
                     </Button>
                 </div>
             </div>

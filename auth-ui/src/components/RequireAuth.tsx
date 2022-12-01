@@ -10,8 +10,7 @@ export const RequireAuth = () => {
     const user = useSelector(selectUser);
     const token = useSelector(selectToken);
 
-    const canPass: boolean =
-        (token !== "" || token !== null) && Object.values(user).every((value) => (value !== "" || value !== null));
+    const canPass: boolean = (token !== null) && Object.values(user).every((value) => value !== null);
 
     return canPass ? (
         <Outlet />

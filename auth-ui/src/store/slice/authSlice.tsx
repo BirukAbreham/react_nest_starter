@@ -13,11 +13,11 @@ export interface AuthState {
 
 const initialState: AuthState = {
     user: {
-        id: "",
-        username: "",
-        email: "",
+        id: null,
+        username: null,
+        email: null,
     },
-    accessToken: "",
+    accessToken: null,
 };
 
 export const requestSignIn = createAsyncThunk(
@@ -74,6 +74,21 @@ export const requestSignOut = createAsyncThunk(
     }
 );
 
+export const requestRefresh = createAsyncThunk(
+    "user/requestRefresh",
+    async () => {
+        try {
+            let response = await AuthClient.post("/refresh", null, {
+                withCredentials: true,
+            });
+
+            return { status: response.status, data: response.data };
+        } catch (error) {
+            return error;
+        }
+    }
+);
+
 export const authSlice = createSlice({
     name: "auth",
     initialState,
@@ -100,6 +115,12 @@ export const authSlice = createSlice({
                     state.accessToken = null;
 
                     state.user = { id: null, username: null, email: null };
+                }
+            )
+            .addCase(
+                requestRefresh.fulfilled,
+                (state: AuthState, action: any) => {
+                    state.accessToken = action.payload.data.accessToken;
                 }
             );
     },

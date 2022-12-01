@@ -1,4 +1,4 @@
-import { Routes, Route } from "react-router-dom";
+import { Route, Routes } from "react-router-dom";
 import { RequireAuth } from "./components";
 import { Home, NotFound404, SignIn, SignUp } from "./pages";
 import { Layout } from "./pages/Layout";
