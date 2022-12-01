@@ -1,13 +1,19 @@
-import { useAuth } from "../hooks";
-import { AuthContextType } from "../types";
 import { useLocation, Navigate, Outlet } from "react-router-dom";
+import { useSelector } from "react-redux";
+import { selectToken, selectUser } from "../store";
 
 export const RequireAuth = () => {
-    const { auth } = useAuth() as AuthContextType;
-
+    // react route related
     const location = useLocation();
 
-    return auth?.accessToken.length ? (
+    // react redux store related
+    const user = useSelector(selectUser);
+    const token = useSelector(selectToken);
+
+    const canPass: boolean =
+        (token !== "" || token !== null) && Object.values(user).every((value) => (value !== "" || value !== null));
+
+    return canPass ? (
         <Outlet />
     ) : (
         <Navigate to="/sign_in" state={{ from: location }} replace />

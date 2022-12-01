@@ -14,25 +14,22 @@ import {
     TextInput,
 } from "@mantine/core";
 import { useForm } from "@mantine/form";
-import { AuthClient } from "../api";
 import { AxiosError } from "axios";
 import { useState } from "react";
-import { AuthContextType } from "../types";
-import { useAuth } from "../hooks";
 import { Link, useNavigate, useLocation } from "react-router-dom";
+import { requestSignedUser, requestSignIn, useAppDispatch } from "../store";
 
 export function SignIn() {
-    // user routing
+    // react router related
     const navigate = useNavigate();
     const location = useLocation();
     const from = location.state?.from?.pathname || "/";
 
-    const { setAuth } = useAuth() as AuthContextType;
+    // react redux related
+    const dispatch = useAppDispatch();
 
     const [loading, setLoading] = useState<boolean>(false);
-
     const [loginErrors, setLoginErrors] = useState<string[]>([]);
-
     const loginForm = useForm({
         initialValues: { username: "", password: "" },
         validate: {
@@ -60,18 +57,12 @@ export function SignIn() {
         setLoading(true);
 
         try {
-            let response = await AuthClient.post("/api/auth/sign_in", data, {
-                withCredentials: true,
-            });
+            const response: any = await dispatch(requestSignIn(data)).unwrap();
 
-            if (response.status === 200) {
+            if (response?.status === 200) {
                 setLoading(false);
 
-                let { access_token } = response.data;
-
-                await getSignedInUser(data.username, {
-                    accessToken: access_token,
-                });
+                await getSignedInUser(data.username);
 
                 // redirect the user to authentication required page
                 navigate(from, { replace: true });
@@ -84,7 +75,6 @@ export function SignIn() {
                 error?.response.status === 401
             ) {
                 let message = "Given username or password is incorrect";
-
                 setLoginErrors([message]);
             } else {
                 setLoginErrors(["Login failed with unexpected error"]);
@@ -92,19 +82,13 @@ export function SignIn() {
         }
     }
 
-    async function getSignedInUser(username: string, token: any) {
+    async function getSignedInUser(username: string) {
         try {
-            let response = await AuthClient.get(`/api/auth/user/${username}`, {
-                headers: { Authorization: `Bearer ${token.accessToken}` },
-            });
+            const response: any = await dispatch(
+                requestSignedUser(username)
+            ).unwrap();
 
-            if (response.status === 200) {
-                const { id, username, email } = response.data;
-
-                setAuth({
-                    user: { id, username, email },
-                    accessToken: token.accessToken,
-                });
+            if (response?.status) {
             }
         } catch (error) {
             setLoginErrors(["Login failed with unexpected error"]);

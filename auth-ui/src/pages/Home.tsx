@@ -4,6 +4,8 @@ import { AuthContextType } from "../types";
 import { useNavigate } from "react-router-dom";
 import { AxiosError } from "axios";
 import { AuthClient } from "../api";
+import { requestSignOut, selectUser, useAppDispatch } from "../store";
+import { useSelector } from "react-redux";
 
 const useStyles = createStyles((theme) => ({
     wrapper: {
@@ -71,25 +73,20 @@ const useStyles = createStyles((theme) => ({
 export function Home() {
     const { classes } = useStyles();
 
-    const { setAuth } = useAuth() as AuthContextType;
-
+    // react router related
     const navigate = useNavigate();
+
+    // react redux store related
+    const dispatch = useAppDispatch();
+    const user = useSelector(selectUser);
 
     async function userSignOut(event: any) {
         event.preventDefault();
 
         try {
-            const response = await AuthClient.post("/api/auth/sign_out", null, {
-                withCredentials: true,
-            });
+            const response: any = await dispatch(requestSignOut(user.username)).unwrap();
 
             if (response.status === 200) {
-                setAuth({
-                    user: { id: 0, username: "", email: "" },
-                    accessToken: "",
-                    refreshToken: "",
-                });
-
                 // redirect user to sign in page
                 navigate("/sign_in", { replace: true });
             }
