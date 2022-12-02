@@ -44,7 +44,7 @@ export const useAPIClient = () => {
             if (error?.response && (token !== "" || token !== null)) {
                 const prevRequest = error?.config;
 
-                if (error?.response.status === 401 && !prevRequest?.sent) {
+                if (error?.response.status === 401 && !prevRequest?._retry) {
                     // refresh the access token and set the auth store state
                     // dispatch refresh async action and it will set the new token
                     const response: any = await dispatch(
@@ -52,20 +52,15 @@ export const useAPIClient = () => {
                     ).unwrap();
 
                     // start to resend the previous failed request
-                    prevRequest.sent = true;
+                    prevRequest._retry = true;
 
                     // set the prevRequest headers
-                    prevRequest.headers = { ...prevRequest.headers };
-
                     prevRequest.headers[
                         "Authorization"
                     ] = `Bearer ${response.data.accessToken}`;
 
                     // return the previous request
-                    return APIClient({
-                        ...prevRequest,
-                        ...{ headers: JSON.stringify(prevRequest.headers) },
-                    });
+                    return APIClient(prevRequest);
                 } else if (error?.response.status === 403) {
                     // navigate the user to sign in page
                     navigate("/sign_in", { replace: true });

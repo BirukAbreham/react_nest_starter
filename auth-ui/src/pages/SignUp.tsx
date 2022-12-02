@@ -77,13 +77,13 @@ export function SignUp() {
             username: values.username,
             email: values.email,
             password: values.password,
-            password_confirmed: values.confirmPassword,
+            confirmPassword: values.confirmPassword,
         };
 
         setLoading(true);
 
         try {
-            const response = await AuthClient.post("/api/auth/sign_up", data);
+            const response = await AuthClient.post("/sign_up", data);
 
             if (response.status === 201) {
                 setLoading(false);
